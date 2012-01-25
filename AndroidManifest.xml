@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
- * Copyright (C) 2011 The Serval Project
+ * Copyright (C) 2011,2012 The Serval Project
  * 
  * This file is part of Serval Software (http://www.servalproject.org)
  * 
@@ -22,6 +22,64 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="org.servalproject" android:versionName="@string/version">
     <uses-sdk android:minSdkVersion="7" android:targetSdkVersion="8"/>
+    
+    <!-- Serval Specific permissions -->
+    <uses-permission android:name="org.servalproject.meshms.SEND_MESHMS"/>
+    <uses-permission android:name="org.servalproject.meshms.RECEIVE_MESHMS"/>
+    <uses-permission android:name="org.servalproject.meshms.RECEIVE_BROADCASTS"/>
+    
+    <!--  android permissions -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
+	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
+	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE"></uses-permission>
+	<uses-permission android:name="android.permission.INTERNET"></uses-permission>
+	<uses-permission android:name="android.permission.BLUETOOTH"></uses-permission>
+	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"></uses-permission>
+	<uses-permission android:name="android.permission.VIBRATE"></uses-permission>
+	<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"></uses-permission>
+	<uses-permission android:name="android.permission.RECORD_AUDIO"></uses-permission>
+	<uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS"></uses-permission>
+	<uses-permission android:name="android.permission.WRITE_SETTINGS"></uses-permission>
+	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"></uses-permission>
+	<uses-permission android:name="android.permission.READ_CONTACTS"></uses-permission>
+	<uses-permission android:name="android.permission.WRITE_CONTACTS"></uses-permission>
+	<uses-permission android:name="android.permission.CALL_PHONE"></uses-permission>
+	<uses-permission android:name="android.permission.WAKE_LOCK"></uses-permission>
+	<uses-permission android:name="android.permission.DISABLE_KEYGUARD"></uses-permission>
+	<uses-permission android:name="android.permission.CAMERA"></uses-permission>
+	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" ></uses-permission>
+	<uses-permission android:name="android.permission.GET_ACCOUNTS" ></uses-permission>
+	<uses-permission android:name="android.permission.BROADCAST_STICKY" ></uses-permission>
+	<uses-permission android:name="android.permission.READ_SMS"></uses-permission>
+    <uses-permission android:name="android.permission.WRITE_SMS"></uses-permission>
+    
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+	<uses-feature android:name="android.hardware.wifi" android:required="true" />
+	<uses-feature android:name="android.hardware.bluetooth" android:required="false" />
+	<uses-feature android:name="android.hardware.telephony" android:required="false" />
+	<uses-feature android:name="android.hardware.microphone" android:required="false" />
+	<uses-feature android:name="android.hardware.location" android:required="false" />
+	<uses-feature android:name="android.hardware.location.gps" android:required="false" />
+	<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+	<uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+	
+	<!-- Serval MeshMS Permissions -->
+	<permission android:name="org.servalproject.meshms.SEND_MESHMS" 
+	    android:description="@string/system_permission_meshms_send_description" 
+	    android:protectionLevel="dangerous" 
+	    android:permissionGroup="android.permission-group.MESSAGES" 
+	    android:label="@string/system_permission_meshms_send_label"></permission>
+    <permission android:description="@string/system_permission_meshms_receive_description" 
+        android:protectionLevel="dangerous" 
+        android:name="org.servalproject.meshms.RECEIVE_MESHMS" 
+        android:label="@string/system_permission_meshms_receive_label" 
+        android:permissionGroup="android.permission-group.MESSAGES"></permission>
+    <permission android:description="@string/system_permission_meshms_receive_broadcasts_description" 
+        android:protectionLevel="signature" 
+        android:name="org.servalproject.meshms.RECEIVE_BROADCASTS" 
+        android:label="@string/system_permission_meshms_receive_broadcasts_label" 
+        android:permissionGroup="android.permission-group.MESSAGES"></permission>
+    
     <application android:icon="@drawable/ic_launcher" android:label="@string/app_name" 
 		android:name="ServalBatPhoneApplication">
         
@@ -153,41 +211,14 @@
                 <data android:mimeType="*/*" />
             </intent-filter>
         </activity>
+        
+		<!-- serval meshms service -->
+		<service android:name="org.servalproject.meshms.IncomingMeshMS" android:exported="true" android:permission="org.servalproject.meshms.SEND_MESHMS">
+            <intent-filter>
+                <action android:name="org.servalproject.meshms.SEND_MESHMS" />
+            </intent-filter>
+        </service>
 		
         </application>
-
-
-	<uses-permission android:name="android.permission.READ_PHONE_STATE"></uses-permission>
-	<uses-permission android:name="android.permission.ACCESS_WIFI_STATE"></uses-permission>
-	<uses-permission android:name="android.permission.CHANGE_WIFI_STATE"></uses-permission>
-	<uses-permission android:name="android.permission.INTERNET"></uses-permission>
-	<uses-permission android:name="android.permission.BLUETOOTH"></uses-permission>
-	<uses-permission android:name="android.permission.BLUETOOTH_ADMIN"></uses-permission>
-	<uses-permission android:name="android.permission.VIBRATE"></uses-permission>
-	<uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"></uses-permission>
-	<uses-permission android:name="android.permission.RECORD_AUDIO"></uses-permission>
-	<uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS"></uses-permission>
-	<uses-permission android:name="android.permission.WRITE_SETTINGS"></uses-permission>
-	<uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"></uses-permission>
-	<uses-permission android:name="android.permission.READ_CONTACTS"></uses-permission>
-	<uses-permission android:name="android.permission.WRITE_CONTACTS"></uses-permission>
-	<uses-permission android:name="android.permission.CALL_PHONE"></uses-permission>
-	<uses-permission android:name="android.permission.WAKE_LOCK"></uses-permission>
-	<uses-permission android:name="android.permission.DISABLE_KEYGUARD"></uses-permission>
-	<uses-permission android:name="android.permission.CAMERA"></uses-permission>
-	<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" ></uses-permission>
-	<uses-permission android:name="android.permission.GET_ACCOUNTS" ></uses-permission>
-	<uses-permission android:name="android.permission.BROADCAST_STICKY" ></uses-permission>
-	<uses-permission android:name="android.permission.READ_SMS"></uses-permission>
-    <uses-permission android:name="android.permission.WRITE_SMS"></uses-permission>
     
-	<uses-feature android:name="android.hardware.camera" android:required="false" />
-	<uses-feature android:name="android.hardware.wifi" android:required="true" />
-	<uses-feature android:name="android.hardware.bluetooth" android:required="false" />
-	<uses-feature android:name="android.hardware.telephony" android:required="false" />
-	<uses-feature android:name="android.hardware.microphone" android:required="false" />
-	<uses-feature android:name="android.hardware.location" android:required="false" />
-	<uses-feature android:name="android.hardware.location.gps" android:required="false" />
-	<uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
-	<uses-feature android:name="android.hardware.touchscreen" android:required="false" />
 </manifest> 
