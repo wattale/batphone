@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.servalproject.account.AccountService;
 import org.servalproject.batman.PeerRecord;
 import org.servalproject.dna.Dna;
 import org.servalproject.dna.Packet;
@@ -71,32 +72,45 @@ public class PeerList extends ListActivity {
 	private class Peer{
 		InetAddress addr;
 		int linkScore=-1;
+		SubscriberId sid;
 		String phoneNumber;
+		String name;
 		int retries;
 		int pingTime;
-		int ttl;
+		int ttl = -1;
 		boolean inDna=false;
 		boolean displayed=false;
+		boolean checkedContacts = false;
 
 		boolean tempInPeerList=false;
 		boolean tempDnaResponse=false;
 
 		Peer(InetAddress addr){
 			this.addr=addr;
-			phoneNumber=addr.toString();
-			phoneNumber=phoneNumber.substring(phoneNumber.indexOf('/')+1);
 		}
 
+		public String getDisplayName() {
+			if (name != null && !"".equals(name))
+				return name;
+			if (phoneNumber != null)
+				return phoneNumber;
+			return addr.getHostAddress();
+		}
+
+		public String getHops() {
+			if (ttl < 0)
+				return "";
+			if (ttl == 64)
+				return "direct";
+			return 64 - (ttl - 1) + " hops";
+		}
 		@Override
 		public String toString() {
-			return phoneNumber
+			return getDisplayName()
 					+ (linkScore != 0 ? " (" + linkScore + ")" : "")
 					+ (inDna ? " " + pingTime + "ms"
 							+ (retries > 1 ? " (-" + (retries - 1) + ")" : "")
-							+ " "
-							+ (ttl == 64 ? "direct" : ((ttl > 0 ? ""
-									+ (64 - (ttl - 1)) : "???") + " hop"))
-							: " ---") + " ";
+							+ " " + getHops() : " ---") + " ";
 		}
 	}
 	Map<InetAddress,Peer> peerMap=new HashMap<InetAddress,Peer>();
@@ -161,6 +175,7 @@ public class PeerList extends ListActivity {
 										peerMap.put(addr, p);
 									}
 									p.ttl = ttl;
+									p.sid = sid;
 								}
 
 								@Override
@@ -183,6 +198,7 @@ public class PeerList extends ListActivity {
 										p.tempDnaResponse = true;
 										p.retries = peer.getRetries();
 										p.pingTime = peer.getPingTime();
+										p.sid = sid;
 									} catch (IOException e) {
 										Log.d("BatPhone", e.toString(), e);
 									}
@@ -194,6 +210,16 @@ public class PeerList extends ListActivity {
 						if (!p.tempInPeerList)
 							p.linkScore=-1;
 
+						if (p.checkedContacts || p.sid == null)
+							continue;
+
+						p.name = AccountService.contactName(
+								getContentResolver(), p.sid, p.phoneNumber);
+						if (p.name == null) {
+							AccountService.addContact(getContentResolver(),
+									null, p.sid, p.phoneNumber);
+						}
+						p.checkedContacts = true;
 					}
 					PeerList.this.runOnUiThread(updateDisplay);
 					sleep(1000);
