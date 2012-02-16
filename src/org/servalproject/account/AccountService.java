@@ -27,50 +27,72 @@ public class AccountService extends Service {
 	public static final String ACTION_ADD = "org.servalproject.account.add";
 	public static final String TYPE = "org.servalproject.account";
 
-	public static final String SID_FIELD_MIMETYPE = "vnd.android.cursor.item/org.servalproject.sid";
+	public static final String SID_FIELD_MIMETYPE = "vnd.android.cursor.item/org.servalproject.insecureSid";
 
-	public static String contactName(ContentResolver resolver,
-			SubscriberId sid, String did) {
-
-		Cursor c1 = resolver.query(ContactsContract.Data.CONTENT_URI,
+	public static long getContact(ContentResolver resolver, SubscriberId sid) {
+		long ret = -1;
+		Cursor cursor = resolver.query(ContactsContract.Data.CONTENT_URI,
 				new String[] { ContactsContract.Data.CONTACT_ID },
 				ContactsContract.Data.DATA1 + " = ? AND "
 						+ ContactsContract.Data.MIMETYPE + " = ?",
 				new String[] { sid.toString(), SID_FIELD_MIMETYPE }, null);
+		if (cursor.moveToNext())
+			ret = cursor.getLong(0);
+		cursor.close();
+		return ret;
+	}
 
-		if (!c1.moveToNext()) {
-			Log.v("BatPhone", "No contact found for " + sid.toString());
-			return null;
-		}
+	public static long getContact(ContentResolver resolver, String did) {
+		long ret = -1;
+		Cursor cursor = resolver
+				.query(ContactsContract.Data.CONTENT_URI,
+						new String[] { ContactsContract.Data.CONTACT_ID },
+						ContactsContract.CommonDataKinds.Phone.NUMBER
+								+ " = ? AND " + ContactsContract.Data.MIMETYPE
+								+ " = ?",
+						new String[] {
+								did,
+								ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE },
+						null);
+		if (cursor.moveToNext())
+			ret = cursor.getLong(0);
+		cursor.close();
+		return ret;
+	}
 
-		long contactId = c1.getLong(0);
-		if (c1.moveToNext()) {
-			Log.v("BatPhone", "Too many results for contact " + sid.toString());
-			return null;
-		}
-
-		Log.v("BatPhone",
-				"Found contact id " + contactId + " for " + sid.toString());
-
-		Cursor c2 = resolver.query(ContactsContract.Contacts.CONTENT_URI,
+	public static String getContactName(ContentResolver resolver, long contactId) {
+		Cursor cursor = resolver.query(ContactsContract.Contacts.CONTENT_URI,
 				new String[] { ContactsContract.Contacts.DISPLAY_NAME },
 				"_ID = ?", new String[] { Long.toString(contactId) }, null);
 
-		if (!c2.moveToNext()) {
-			Log.w("BatPhone", "Could not find contact name for " + contactId);
-			return null;
+		try {
+			if (!cursor.moveToNext()) {
+				Log.w("BatPhone", "Could not find contact name for "
+						+ contactId);
+				return null;
+			}
+
+			return cursor.getString(0);
+		} finally {
+			cursor.close();
 		}
+	}
 
-		String name = c2.getString(0);
-
-		if (c1.moveToNext()) {
-			Log.w("BatPhone", "Too many results for contact " + contactId);
-			return null;
+	public static SubscriberId getContactSid(ContentResolver resolver,
+			long contactId) {
+		Cursor cursor = resolver.query(ContactsContract.Data.CONTENT_URI,
+				new String[] { ContactsContract.Data.DATA1 },
+				ContactsContract.Data.CONTACT_ID + " = ? AND "
+						+ ContactsContract.Data.MIMETYPE + " = ?",
+				new String[] { Long.toString(contactId), SID_FIELD_MIMETYPE },
+				null);
+		try {
+			if (cursor.moveToNext())
+				return new SubscriberId(cursor.getString(0));
+		} finally {
+			cursor.close();
 		}
-
-		if (name == null)
-			return "";
-		return name;
+		return null;
 	}
 
 	public static void addContact(ContentResolver resolver, String name,
@@ -116,12 +138,12 @@ public class AccountService extends Service {
 		builder.withValue(ContactsContract.Data.MIMETYPE, SID_FIELD_MIMETYPE);
 		String sidText = sid.toString();
 		builder.withValue(ContactsContract.Data.DATA1, sidText);
-		builder.withValue(ContactsContract.Data.DATA2, "Summary");
-		builder.withValue(ContactsContract.Data.DATA3,
-				"Detail " + sidText.substring(0, 7) + "...");
+		builder.withValue(ContactsContract.Data.DATA2, "Public Key");
+		builder.withValue(ContactsContract.Data.DATA3, sidText.substring(0, 16)
+				+ "...");
 		operationList.add(builder.build());
 
-		// Create a Data record for the real phone number
+		// Create a Data record for their phone number
 		builder = ContentProviderOperation
 				.newInsert(ContactsContract.Data.CONTENT_URI);
 		builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
@@ -130,20 +152,6 @@ public class AccountService extends Service {
 		builder.withValue(ContactsContract.CommonDataKinds.Phone.NUMBER, did);
 		builder.withValue(ContactsContract.CommonDataKinds.Phone.TYPE,
 				ContactsContract.CommonDataKinds.Phone.TYPE_MAIN);
-		operationList.add(builder.build());
-
-		// Create a Data record for the real phone number
-		builder = ContentProviderOperation
-				.newInsert(ContactsContract.Data.CONTENT_URI);
-		builder.withValueBackReference(ContactsContract.Data.RAW_CONTACT_ID, 0);
-		builder.withValue(ContactsContract.Data.MIMETYPE,
-				ContactsContract.CommonDataKinds.Phone.CONTENT_ITEM_TYPE);
-		builder.withValue(ContactsContract.CommonDataKinds.Phone.NUMBER,
-				"+99801" + sidText);
-		builder.withValue(ContactsContract.CommonDataKinds.Phone.TYPE,
-				ContactsContract.CommonDataKinds.Phone.TYPE_CUSTOM);
-		builder.withValue(ContactsContract.CommonDataKinds.Phone.LABEL,
-				"Subscriber");
 		operationList.add(builder.build());
 
 		try {

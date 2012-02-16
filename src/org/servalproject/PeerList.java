@@ -213,12 +213,24 @@ public class PeerList extends ListActivity {
 						if (p.checkedContacts || p.sid == null)
 							continue;
 
-						p.name = AccountService.contactName(
-								getContentResolver(), p.sid, p.phoneNumber);
-						if (p.name == null) {
-							AccountService.addContact(getContentResolver(),
-									null, p.sid, p.phoneNumber);
+						long contactId = AccountService.getContact(
+								getContentResolver(), p.sid);
+						boolean subscriberContactExists = contactId >= 0;
+
+						if (!subscriberContactExists)
+							contactId = AccountService.getContact(
+									getContentResolver(), p.phoneNumber);
+
+						if (contactId >= 0) {
+							p.name = AccountService.getContactName(
+									getContentResolver(), contactId);
 						}
+
+						if (!subscriberContactExists) {
+							AccountService.addContact(getContentResolver(),
+									p.name, p.sid, p.phoneNumber);
+						}
+
 						p.checkedContacts = true;
 					}
 					PeerList.this.runOnUiThread(updateDisplay);
